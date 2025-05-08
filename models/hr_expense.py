@@ -35,11 +35,8 @@ class HrExpense(models.Model):
 
 class HrExpenseSheet(models.Model):
     _inherit = 'hr.expense.sheet'
-    
-    def action_sheet_move_create(self):
-        res = super(HrExpenseSheet, self).action_sheet_move_create()
-        rounding = self.company_id.currency_id.rounding
-        
+
+    def conciliar_facturas(self):
         lineas_por_pagar = self.expense_line_ids.factura_id.line_ids.filtered(lambda l: l.account_type == 'liability_payable' and not l.reconciled)
         gastos = self.expense_line_ids
 
@@ -85,5 +82,15 @@ class HrExpenseSheet(models.Model):
             (l | movimiento.line_ids[i]).reconcile()
             i += 1
 
+    
+    def action_sheet_move_create(self):
+        res = super(HrExpenseSheet, self).action_sheet_move_create()
+        self.conciliar_facturas()
+        
         return res
 
+    def action_sheet_move_post(self):
+        res = super(HrExpenseSheet, self).action_sheet_move_post()
+        self.conciliar_facturas()
+        
+        return res
