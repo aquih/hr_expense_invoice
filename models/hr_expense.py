@@ -2,7 +2,7 @@
 
 from odoo import api, fields, Command, models, _
 from odoo.exceptions import UserError, ValidationError
-from odoo.tools import float_is_zero
+from odoo.tools import format_amount
 
 import logging
 
@@ -52,6 +52,14 @@ class HrExpenseSheet(models.Model):
             }))
 
         for g in gastos:
+            
+            total_factura = sum(g.factura_id.line_ids.filtered(lambda l: l.account_type == 'liability_payable' and not l.reconciled).mapped('credit'))
+            if g.total_amount != total_factura:
+                monto_gasto = format_amount(self.env, g.total_amount, g.company_currency_id, lang_code=self.env.lang)
+                monto_factura = format_amount(self.env, total_factura, g.company_currency_id, lang_code=self.env.lang)
+                
+                raise ValidationError(f"El gasto {g.name} ({monto_gasto}) y la factura {g.factura_id.name} ({monto_factura}) no tienen el mismo total.")
+
             lineas.append(Command.create({
                 'name': g.name,
                 'ref': g.name,
