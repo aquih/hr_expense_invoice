@@ -20,4 +20,5 @@
     ],
     'installable': True,
     'auto_install': False,
+    'license': 'Other OSI approved licence',
 }
