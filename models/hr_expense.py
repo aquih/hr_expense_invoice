@@ -33,12 +33,14 @@ class HrExpense(models.Model):
                     'warning': {'title': 'Producto con costo', 'message': 'No se pueden relacionar facturas cuando el producto de gasto tiene un costo. El campo de factura se ha dejado vacío.'},
                 }
 
-class HrExpenseSheet(models.Model):
-    _inherit = 'hr.expense.sheet'
+class HrExpensePostWizard(models.TransientModel):
+    _inherit = 'hr.expense.post.wizard'
 
-    def conciliar_facturas(self):
-        lineas_por_pagar = self.expense_line_ids.factura_id.line_ids.filtered(lambda l: l.account_type == 'liability_payable' and not l.reconciled)
-        gastos = self.expense_line_ids
+    def action_post_entry(self):
+        result = super().action_post_entry()
+
+        gastos = self.env['hr.expense'].browse(self.env.context['active_ids'])
+        lineas_por_pagar = gastos.factura_id.line_ids.filtered(lambda l: l.account_type == 'liability_payable' and not l.reconciled)
 
         lineas = []
         for p in lineas_por_pagar:
@@ -52,12 +54,11 @@ class HrExpenseSheet(models.Model):
             }))
 
         for g in gastos:
-            
             total_factura = sum(g.factura_id.line_ids.filtered(lambda l: l.account_type == 'liability_payable' and not l.reconciled).mapped('credit'))
             if g.total_amount != total_factura:
                 monto_gasto = format_amount(self.env, g.total_amount, g.company_currency_id, lang_code=self.env.lang)
                 monto_factura = format_amount(self.env, total_factura, g.company_currency_id, lang_code=self.env.lang)
-                
+            
                 raise ValidationError(f"El gasto {g.name} ({monto_gasto}) y la factura {g.factura_id.name} ({monto_factura}) no tienen el mismo total.")
 
             lineas.append(Command.create({
@@ -79,26 +80,15 @@ class HrExpenseSheet(models.Model):
         movimiento = self.env['account.move'].create({
             'journal_id': diario.id,
             'date': self.accounting_date,
-            'ref': 'Conciliacion manual: '+self.name,
+            'ref': 'Conciliacion manual: '+', '.join(gastos.mapped('name')),
             'move_type': 'entry',
             'line_ids': lineas
         })
-        movimiento._post()
+        movimiento.action_post()
         
         i = 0
         for l in lineas_por_pagar:
             (l | movimiento.line_ids[i]).reconcile()
             i += 1
-
-    
-    def action_sheet_move_create(self):
-        res = super(HrExpenseSheet, self).action_sheet_move_create()
-        self.conciliar_facturas()
         
-        return res
-
-    def action_sheet_move_post(self):
-        res = super(HrExpenseSheet, self).action_sheet_move_post()
-        self.conciliar_facturas()
-        
-        return res
+        return result
