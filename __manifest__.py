@@ -2,7 +2,7 @@
 
 {
     'name': 'Gastos unidos a facturas',
-    'version': '1.2',
+    'version': '2.0',
     'category': 'Accounting/Expenses',
     'sequence': 6,
     'summary': 'Gastos unidos a facturas',
@@ -11,7 +11,7 @@
     'author': 'Rodrigo Fernandez',
     'depends': ['hr_expense'],
     'data': [
-        'views/hr_expense_invoice_crear_gasto_views.xml',
+        'wizard/hr_expense_invoice_crear_gasto_views.xml',
         'views/hr_expense_views.xml',
         'security/hr_expense_invoice_security.xml',
         'security/ir.model.access.csv',
