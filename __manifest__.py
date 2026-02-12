@@ -2,7 +2,7 @@
 
 {
     'name': 'Gastos unidos a facturas',
-    'version': '2.0',
+    'version': '2.1',
     'category': 'Accounting/Expenses',
     'sequence': 6,
     'summary': 'Gastos unidos a facturas',
