@@ -30,7 +30,7 @@ class HrExpensePostWizard(models.TransientModel):
 
             for g in gastos.filtered(lambda g: g.factura_id.exists()):
                 total_factura = sum(g.factura_id.line_ids.filtered(lambda l: l.account_type == 'liability_payable' and not l.reconciled).mapped('credit'))
-                if g.total_amount != total_factura:
+                if float_compare(g.total_amount, total_factura, precision_rounding=g.currency_id.rounding) != 0:
                     monto_gasto = format_amount(self.env, g.total_amount, g.company_currency_id, lang_code=self.env.lang)
                     monto_factura = format_amount(self.env, total_factura, g.company_currency_id, lang_code=self.env.lang)
                 
