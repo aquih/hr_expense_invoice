@@ -2,7 +2,7 @@
 
 from odoo import api, fields, Command, models, _
 from odoo.exceptions import UserError, ValidationError
-from odoo.tools import format_amount
+from odoo.tools import format_amount, float_compare
 
 import logging
 
